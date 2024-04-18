@@ -1,4 +1,4 @@
-import { background, dino, setCanvasSizes, DINO_STANCES, clouds, cloudObject } from "./modules/canvas.js";
+import { background, dino, setCanvasSizes, DINO_STANCES, clouds, cloudObject, groundSections, groundSectionObject, GROUND_SECTION_TYPES } from "./modules/canvas.js";
 
 let keyState = {};
 
@@ -26,9 +26,11 @@ function game() {
     } else {
         stopJumpingAndReturnToGround();
     }
+    updateGround();
     updateClouds();
 
     dino.draw();
+    groundSections.draw();
     clouds.draw();
     raf = window.requestAnimationFrame(game);
 }
@@ -124,6 +126,47 @@ function updateClouds() {
 
         if (clouds.array[i].x <= 0 - 100) {
             clouds.array.splice(i, 1);
+        }
+    }
+}
+
+function buildGroundSection(i, type, xPos) {
+    const section = JSON.parse(JSON.stringify(groundSectionObject));
+    
+    if (!type) {
+        const random = Math.floor(Math.random() * 100) + 1;
+        if (random <= 90) {
+            section.type = GROUND_SECTION_TYPES.FLAT;
+        } else if (random > 90 && random < 96) {
+            section.type = GROUND_SECTION_TYPES.LUMP;
+        } else if (random > 96 && random <= 100) {
+            section.type = GROUND_SECTION_TYPES.DIP;
+        }
+    } else {
+        section.type = type;
+    }
+
+    section.x = xPos;
+    section.pathBitY = Math.floor(Math.random() * 12 - 1) + groundSectionObject.FLAT_GROUND_Y + 3;
+    section.pathBitW = Math.floor(Math.random() * 3) + 1;
+    section.pathBitX = Math.floor(Math.random() * (section.x + (section.w - section.pathBitW))) + section.x;
+    return section;
+}
+
+function updateGround() {
+    if (groundSections.array.length === 0) {
+        const sectionCount = (window.innerWidth / groundSectionObject.w) * 1.1;
+        for (let i = 0; i < sectionCount; i++) {
+            groundSections.array.push(buildGroundSection(i, GROUND_SECTION_TYPES.FLAT, groundSectionObject.w * i));
+        }
+    }
+
+    for (let i = 0; i < groundSections.array.length; i++) {
+        groundSections.array[i].x -= dino.SPEED;
+        groundSections.array[i].pathBitX -= dino.SPEED;
+        if (groundSections.array[i].x <= (groundSectionObject.w * -1)) {
+            groundSections.array.splice(i, 1);
+            groundSections.array.push(buildGroundSection(i, undefined, groundSections.array[groundSections.array.length - 1].x + groundSections.array[i].w));
         }
     }
 }

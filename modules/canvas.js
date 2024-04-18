@@ -1,6 +1,14 @@
 const backgroundCanvas = document.getElementById("background");
 const dinoCanvas = document.getElementById("dino");
 const cloudsCanvas = document.getElementById("clouds");
+const groundCanvas = document.getElementById("ground");
+const obstaclesCanvas = document.getElementById("obstacles");
+
+const backgroundCtx = backgroundCanvas.getContext("2d");
+const dinoCtx = dinoCanvas.getContext("2d");
+const cloudsCtx = cloudsCanvas.getContext("2d");
+const groundCtx = groundCanvas.getContext("2d");
+const obstaclesCtx = obstaclesCanvas.getContext("2d");
 
 const PRIMARY_COLOR = "rgb(84, 84, 84)";
 
@@ -53,7 +61,7 @@ const clouds = {
 
         this.array.forEach(cloud => this.drawCloud(cloud));
     }
-}
+};
 
 const cloudObject = {
     x: 0,
@@ -61,7 +69,7 @@ const cloudObject = {
     w: 16,
     h: 13,
     speedMultiplier: 1,
-}
+};
 
 const background = {
     x: 0,
@@ -84,6 +92,59 @@ const DINO_STANCES = {
     DUCK: 5
 };
 
+const GROUND_SECTION_TYPES = {
+    FLAT: 1,
+    LUMP: 2,
+    DIP: 3
+}
+
+const groundSectionObject = {
+    x: 1,
+    y: 1,
+    w: 14,
+    h: 1,
+    pathBitX: 0,
+    pathBitY: 0,
+    pathBitW: 0,
+    type: GROUND_SECTION_TYPES.FLAT,
+    FLAT_GROUND_Y: 4
+}
+
+const groundSections = {
+    color: PRIMARY_COLOR,
+    array: [],
+    drawPathBit(section) {
+        drawRect(groundCtx, section.pathBitX, section.pathBitY, section.pathBitW, section.h);
+    },
+    draw() {
+        groundCtx.clearRect(0, 0, groundCanvas.width, groundCanvas.height);
+        groundCtx.fillStyle = this.color;
+        this.array.forEach(section => {
+            if (section.type === GROUND_SECTION_TYPES.FLAT) {
+                drawRect(groundCtx, section.x, section.FLAT_GROUND_Y, section.w, section.h);
+            } else if (section.type === GROUND_SECTION_TYPES.LUMP) {
+                let verticalDrawDistance = drawRect(groundCtx, section.x + 4, 0, 6, 1, 1);
+                verticalDrawDistance += drawRect(groundCtx, section.x + 3, verticalDrawDistance, 2, 1);
+                verticalDrawDistance += drawRect(groundCtx, section.x + 9, verticalDrawDistance, 2, 1, 1);
+                verticalDrawDistance += drawRect(groundCtx, section.x + 1, verticalDrawDistance, 3, 1);
+                verticalDrawDistance += drawRect(groundCtx, section.x + 10, verticalDrawDistance, 2, 1, 1);
+                verticalDrawDistance += drawRect(groundCtx, section.x, verticalDrawDistance, 2, 1);
+                verticalDrawDistance += drawRect(groundCtx, section.x + 12, verticalDrawDistance, 2, 1, 1);
+                verticalDrawDistance += drawRect(groundCtx, section.x, verticalDrawDistance, 1, 1);
+                verticalDrawDistance += drawRect(groundCtx, section.x + 13, verticalDrawDistance, 1);
+            } else {
+                let verticalDrawDistance = section.FLAT_GROUND_Y;
+                verticalDrawDistance += drawRect(groundCtx, section.x, verticalDrawDistance, 1, 1);
+                verticalDrawDistance += drawRect(groundCtx, section.x + 13, verticalDrawDistance, 1, 1, 1);
+                verticalDrawDistance += drawRect(groundCtx, section.x, verticalDrawDistance, 2, 1);
+                verticalDrawDistance += drawRect(groundCtx, section.x + 12, verticalDrawDistance, 2, 1, 1);
+                verticalDrawDistance += drawRect(groundCtx, section.x + 1, verticalDrawDistance, 11, 1);
+            }
+            this.drawPathBit(section);
+        });
+    },
+};
+
 
 const dino = {
     x: 0,
@@ -104,6 +165,7 @@ const dino = {
     drifting: false,
     jumpCancelled: false,
     jumpStarted: false,
+    SPEED: 7,
     draw() {
         const drawHead = (verticalDrawDistance) => {
             const drawEye = (verticalDrawDistance) => {
@@ -197,10 +259,6 @@ const dino = {
     }
 };
 
-const backgroundCtx = backgroundCanvas.getContext("2d");
-const dinoCtx = dinoCanvas.getContext("2d");
-const cloudsCtx = cloudsCanvas.getContext("2d");
-
 function setCanvasSizes() {
     setCanvasSize(backgroundCanvas, window.innerWidth, window.innerHeight, 0, 0);
 
@@ -209,7 +267,9 @@ function setCanvasSizes() {
     dino.canvasWidth = window.innerWidth;
     setCanvasSize(dinoCanvas, dino.canvasWidth, 200, 0, dinoTop);
 
-    setCanvasSize(cloudsCanvas, window.innerWidth, window.innerHeight / 3, 0, 0)
+    setCanvasSize(groundCanvas, window.innerWidth, 12, 0, dinoTop + 188);
+
+    setCanvasSize(cloudsCanvas, window.innerWidth, window.innerHeight / 3, 0, 0);
 }
 
 function setCanvasSize(canvas, width, height, left, top) {
@@ -219,4 +279,4 @@ function setCanvasSize(canvas, width, height, left, top) {
     canvas.style.left = `${left}px`;
 }
 
-export { background, dino, setCanvasSizes, DINO_STANCES, clouds, cloudObject };
+export { background, dino, setCanvasSizes, DINO_STANCES, clouds, cloudObject, groundSections, groundSectionObject, GROUND_SECTION_TYPES };
